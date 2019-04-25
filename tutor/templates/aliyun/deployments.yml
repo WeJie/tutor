@@ -1,0 +1,352 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cms
+  template:
+    metadata:
+      labels:
+        app: cms
+    spec:
+      containers:
+        - name: cms
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_OPENEDX }}
+          env:
+          - name: SERVICE_VARIANT
+            value: cms
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /openedx/edx-platform/lms/envs/tutor/
+              name: settings-lms
+            - mountPath: /openedx/edx-platform/cms/envs/tutor/
+              name: settings-cms
+            - mountPath: /openedx/config
+              name: config
+            - mountPath: /openedx/data
+              name: data
+          #imagePullPolicy: Always
+      volumes:
+        - name: settings-lms
+          configMap:
+            name: openedx-settings-lms
+        - name: settings-cms
+          configMap:
+            name: openedx-settings-cms
+        - name: config
+          configMap:
+            name: openedx-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: cms-data
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forum
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forum
+  template:
+    metadata:
+      labels:
+        app: forum
+    spec:
+      containers:
+        - name: forum
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_FORUM }}
+          ports:
+            - containerPort: 4567
+          imagePullPolicy: Always
+          env:
+            - name: SEARCH_SERVER
+              value: "http://{{ ELASTICSEARCH_HOST }}:{{ ELASTICSEARCH_PORT }}"
+            - name: MONGOHQ_URL
+              value: "mongodb://{% if MONGODB_USERNAME and MONGODB_PASSWORD %}{{ MONGODB_USERNAME}}:{{ MONGODB_PASSWORD }}@{% endif %}{{ MONGODB_HOST }}:{{ MONGODB_PORT }}/cs_comments_service"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lms
+  template:
+    metadata:
+      labels:
+        app: lms
+    spec:
+      containers:
+        - name: lms
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_OPENEDX }}
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /openedx/edx-platform/lms/envs/tutor/
+              name: settings-lms
+            - mountPath: /openedx/edx-platform/cms/envs/tutor/
+              name: settings-cms
+            - mountPath: /openedx/config
+              name: config
+            - mountPath: /openedx/data
+              name: data
+          imagePullPolicy: Always
+      volumes:
+        - name: settings-lms
+          configMap:
+            name: openedx-settings-lms
+        - name: settings-cms
+          configMap:
+            name: openedx-settings-cms
+        - name: config
+          configMap:
+            name: openedx-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: lms-data
+
+{% if ACTIVATE_ELASTICSEARCH %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_ELASTICSEARCH }}
+          env:
+            - name: ES_JAVA_OPTS
+              value: "-Xms1g -Xmx1g"
+            - name: "cluster.name"
+              value: openedx
+            - name: "bootstrap.memory_lock"
+              value: "true"
+          ports:
+            - containerPort: 9200
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: elasticsearch
+{% endif %}
+
+{% if ACTIVATE_MEMCACHED %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached
+  template:
+    metadata:
+      labels:
+        app: memcached
+    spec:
+      containers:
+        - name: memcached
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_MEMCACHED }}
+          ports:
+            - containerPort: 11211
+{% endif %}
+
+{% if ACTIVATE_MONGODB %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_MONGODB }}
+          command: ["mongod", "--smallfiles", "--nojournal", "--storageEngine", "wiredTiger"]
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - mountPath: /data/db
+              name: data
+      volumes:
+        - name: data
+          emptyDir: {}
+{% endif %}
+
+{% if ACTIVATE_MYSQL %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_MYSQL }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mysql
+{% endif %}
+
+{% if ACTIVATE_SMTP %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smtp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smtp
+  template:
+    metadata:
+      labels:
+        app: smtp
+    spec:
+      containers:
+        - name: smtp
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_SMTP }}
+          ports:
+            - containerPort: 25
+{% endif %}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      initContainers:
+        - name: clean-openedx-staticfiles
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_OPENEDX }}
+          command: ['rm', '-rf', '/var/www/openedx/staticfiles']
+          volumeMounts:
+            - mountPath: /var/www/openedx/
+              name: openedx-staticfiles
+          imagePullPolicy: Always
+        - name: init-openedx-staticfiles
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_OPENEDX }}
+          command: ['cp', '-r', '/openedx/staticfiles', '/var/www/openedx/']
+          volumeMounts:
+            - mountPath: /var/www/openedx/
+              name: openedx-staticfiles
+          imagePullPolicy: Always
+      containers:
+        - name: nginx
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_NGINX }}
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d/
+              name: config
+            - mountPath: /var/www/openedx/
+              name: openedx-staticfiles
+            - mountPath: /openedx/data/lms
+              name: data
+          ports:
+            - containerPort: 80
+              name: http-port
+            - containerPort: 443
+              name: https-port
+      volumes:
+        - name: config
+          configMap:
+            name: nginx-config
+        - name: openedx-staticfiles
+          persistentVolumeClaim:
+            claimName: openedx-staticfiles
+        - name: data
+          persistentVolumeClaim:
+            claimName: lms-data
+
+{% if ACTIVATE_RABBITMQ %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: {{ DOCKER_REGISTRY }}{{ DOCKER_IMAGE_RABBITMQ }}
+          ports:
+            - containerPort: 5672
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rabbitmq
+{% endif %}

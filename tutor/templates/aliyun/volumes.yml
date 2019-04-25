@@ -1,0 +1,253 @@
+###################
+# PersistentVolume
+###################
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-cms-data
+  name: {{ ALIYUN_NAMESPACE }}-cms-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: cms-data
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-cms-data
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-lms-data
+  name: {{ ALIYUN_NAMESPACE }}-lms-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: lms-data
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-lms-data
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-elasticsearch
+  name: {{ ALIYUN_NAMESPACE }}-elasticsearch
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: elasticsearch
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-elasticsearch
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-mysql
+  name: {{ ALIYUN_NAMESPACE }}-mysql
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: mysql
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-mysql
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-openedx-staticfiles
+  name: {{ ALIYUN_NAMESPACE }}-openedx-staticfiles
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: openedx-staticfiles
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-openedx-staticfiles
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    alicloud-pvname: {{ ALIYUN_NAMESPACE }}-rabbitmq
+  name: {{ ALIYUN_NAMESPACE }}-rabbitmq
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: rabbitmq
+    namespace: {{ ALIYUN_NAMESPACE }}
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      path: /{{ ALIYUN_NAMESPACE }}-rabbitmq
+      server: {{ ALIYUN_STORAGE_SERVER }} 
+  storageClassName: nas
+
+
+#######################
+# PersistentVolumeClaim
+#######################
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cms-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-cms-data
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-cms-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lms-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-lms-data
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-lms-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-elasticsearch
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-elasticsearch
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-mysql
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-mysql
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openedx-staticfiles
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-openedx-staticfiles
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-openedx-staticfiles
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: {{ ALIYUN_NAMESPACE }}-rabbitmq
+  storageClassName: nas
+  volumeName: {{ ALIYUN_NAMESPACE }}-rabbitmq

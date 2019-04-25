@@ -6,6 +6,7 @@ import click_repl
 
 from .__about__ import __version__
 from .android import android
+from .aliyun import aliyun 
 from .config import config
 from .dev import dev
 from .images import images
@@ -47,6 +48,7 @@ cli.add_command(k8s)
 cli.add_command(ui)
 cli.add_command(webui)
 cli.add_command(print_help)
+cli.add_command(aliyun)
 
 if __name__ == "__main__":
     main()
