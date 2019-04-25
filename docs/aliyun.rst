@@ -28,6 +28,10 @@ Launch the platform on k8s in 1 click::
 
     tutor aliyun quickstart
 
+
+Add ALIYUN_STORAGE_SERVER to config.yml
+Add ALIYUN_NAMESPACE to config.yml
+
 All Kubernetes resources are associated to ALIYUN_NAMESPACE of conifg.yml.
 
 
